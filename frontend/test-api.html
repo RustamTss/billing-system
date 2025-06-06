@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button { margin: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Billing System API Test</h1>
+    
+    <button onclick="testHealth()">Test Health</button>
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testDashboard()">Test Dashboard</button>
+    <button onclick="testBrokers()">Test Brokers</button>
+
+    <div id="results"></div>
+
+    <script>
+        const API_BASE = 'http://165.232.113.23:8081/api/v1';
+        let token = '';
+
+        async function addResult(title, success, data) {
+            const div = document.createElement('div');
+            div.className = `result ${success ? 'success' : 'error'}`;
+            div.innerHTML = `<h3>${title}</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            document.getElementById('results').appendChild(div);
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch('http://165.232.113.23:8081/health');
+                const data = await response.json();
+                addResult('Health Check', response.ok, data);
+            } catch (error) {
+                addResult('Health Check', false, error.message);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123' })
+                });
+                const data = await response.json();
+                if (data.success && data.data.token) {
+                    token = data.data.token;
+                }
+                addResult('Login', response.ok, data);
+            } catch (error) {
+                addResult('Login', false, error.message);
+            }
+        }
+
+        async function testDashboard() {
+            if (!token) {
+                addResult('Dashboard', false, 'Please login first');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE}/dashboard/metrics`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                addResult('Dashboard', response.ok, data);
+            } catch (error) {
+                addResult('Dashboard', false, error.message);
+            }
+        }
+
+        async function testBrokers() {
+            if (!token) {
+                addResult('Brokers', false, 'Please login first');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE}/brokers`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                addResult('Brokers', response.ok, data);
+            } catch (error) {
+                addResult('Brokers', false, error.message);
+            }
+        }
+    </script>
+</body>
+</html> 
