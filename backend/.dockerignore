@@ -1,0 +1,39 @@
+# Исключаем ненужные файлы и директории
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+
+# Собранные файлы
+main
+*.exe
+
+# Временные файлы
+*.tmp
+*.swp
+*.swo
+
+# IDE файлы
+.vscode/
+.idea/
+*.iml
+
+# OS файлы
+.DS_Store
+Thumbs.db
+
+# Логи
+*.log
+
+# Переменные окружения (если есть)
+.env.local
+.env.development
+.env.production
+
+# Тестовые файлы
+*_test.go
+testdata/
+
+# Документация
+docs/ 

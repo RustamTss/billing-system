@@ -1,0 +1,106 @@
+# Переменные окружения
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*.local
+
+# Логи
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# node_modules
+node_modules/
+jspm_packages/
+
+# Собранные файлы
+dist/
+build/
+out/
+
+# Go собранные файлы
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+__debug_bin
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# IDE файлы
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.iml
+
+# OS файлы
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+.docker/
+
+# Временные файлы
+*.tmp
+*.temp
+*.cache
+
+# SSL сертификаты
+ssl/
+*.pem
+*.key
+*.crt
+
+# Backup файлы
+*.bak
+*.backup
+
+# Данные MongoDB (если запускается локально)
+data/
+mongo-data/
+
+# Nginx логи
+nginx/logs/
+
+# Прочие файлы
+.nyc_output
+.coverage
+*.tgz
+*.tar.gz 
