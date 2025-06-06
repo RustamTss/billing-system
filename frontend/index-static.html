@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing System - Demo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .metric { text-align: center; padding: 15px; background: #f8f9fa; border-radius: 6px; margin: 10px 0; }
+        .metric-value { font-size: 2em; font-weight: bold; color: #1890ff; }
+        .metric-label { color: #666; margin-top: 5px; }
+        button { background: #1890ff; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin: 5px; }
+        button:hover { background: #40a9ff; }
+        .success { color: #52c41a; }
+        .error { color: #ff4d4f; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 6px; }
+        .status.success { background: #f6ffed; border: 1px solid #b7eb8f; }
+        .status.error { background: #fff2f0; border: 1px solid #ffb3b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #f0f0f0; }
+        th { background: #fafafa; font-weight: 600; }
+        .auth-form { max-width: 400px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #333; }
+        input { width: 100%; padding: 10px; border: 1px solid #d9d9d9; border-radius: 6px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚛 Billing Management System</h1>
+            <p>Comprehensive billing solution for transportation companies</p>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm" class="card">
+            <h2>🔐 Вход в систему</h2>
+            <div class="auth-form">
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" id="username" value="admin" placeholder="admin">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" id="password" value="admin123" placeholder="admin123">
+                </div>
+                <button onclick="login()">Войти</button>
+            </div>
+            <div id="loginStatus"></div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="hidden">
+            <div class="card">
+                <h2>📊 Dashboard</h2>
+                <button onclick="loadDashboard()">Обновить метрики</button>
+                <button onclick="logout()">Выйти</button>
+                <div id="dashboardStatus"></div>
+                <div id="metrics" class="grid"></div>
+            </div>
+
+            <div class="card">
+                <h2>🏢 Брокеры</h2>
+                <button onclick="loadBrokers()">Загрузить брокеров</button>
+                <div id="brokersStatus"></div>
+                <div id="brokersList"></div>
+            </div>
+
+            <div class="card">
+                <h2>📋 Лоады</h2>
+                <button onclick="loadLoads()">Загрузить лоады</button>
+                <div id="loadsStatus"></div>
+                <div id="loadsList"></div>
+            </div>
+
+            <div class="card">
+                <h2>📄 Инвойсы</h2>
+                <button onclick="loadInvoices()">Загрузить инвойсы</button>
+                <div id="invoicesStatus"></div>
+                <div id="invoicesList"></div>
+            </div>
+
+            <div class="card">
+                <h2>💰 Платежи</h2>
+                <button onclick="loadPayments()">Загрузить платежи</button>
+                <div id="paymentsStatus"></div>
+                <div id="paymentsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1';
+        let token = '';
+
+        function showStatus(elementId, message, isSuccess = true) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<div class="status ${isSuccess ? 'success' : 'error'}">${message}</div>`;
+        }
+
+        async function apiCall(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            
+            if (token) {
+                headers.Authorization = `Bearer ${token}`;
+            }
+
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers
+                });
+                
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const result = await apiCall('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+
+            if (result.success && result.data.success) {
+                token = result.data.data.token;
+                showStatus('loginStatus', '✅ Успешный вход!');
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadDashboard();
+            } else {
+                showStatus('loginStatus', `❌ Ошибка входа: ${result.data?.error || result.error}`, false);
+            }
+        }
+
+        function logout() {
+            token = '';
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+        }
+
+        async function loadDashboard() {
+            const result = await apiCall('/dashboard/metrics');
+            
+            if (result.success && result.data.success) {
+                const metrics = result.data.data;
+                document.getElementById('metrics').innerHTML = `
+                    <div class="metric">
+                        <div class="metric-value">$${metrics.total_debt.toLocaleString()}</div>
+                        <div class="metric-label">Общий долг</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${metrics.active_brokers}</div>
+                        <div class="metric-label">Активные брокеры</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${metrics.total_loads}</div>
+                        <div class="metric-label">Всего лоадов</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${metrics.total_invoices}</div>
+                        <div class="metric-label">Всего инвойсов</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">$${metrics.paid_this_month.toLocaleString()}</div>
+                        <div class="metric-label">Оплачено в этом месяце</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${metrics.pending_invoices}</div>
+                        <div class="metric-label">Ожидающие оплаты</div>
+                    </div>
+                `;
+                showStatus('dashboardStatus', '✅ Метрики загружены');
+            } else {
+                showStatus('dashboardStatus', `❌ Ошибка загрузки: ${result.data?.error || result.error}`, false);
+            }
+        }
+
+        async function loadBrokers() {
+            const result = await apiCall('/brokers');
+            
+            if (result.success && result.data.success) {
+                const brokers = result.data.data || [];
+                document.getElementById('brokersList').innerHTML = `
+                    <table>
+                        <thead>
+                            <tr><th>Компания</th><th>Email</th><th>Телефон</th><th>Лимит кредита</th></tr>
+                        </thead>
+                        <tbody>
+                            ${brokers.map(broker => `
+                                <tr>
+                                    <td>${broker.company_name}</td>
+                                    <td>${broker.email}</td>
+                                    <td>${broker.phone || '-'}</td>
+                                    <td>$${(broker.credit_limit || 0).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                showStatus('brokersStatus', `✅ Загружено ${brokers.length} брокеров`);
+            } else {
+                showStatus('brokersStatus', `❌ Ошибка: ${result.data?.error || result.error}`, false);
+            }
+        }
+
+        async function loadLoads() {
+            const result = await apiCall('/loads');
+            
+            if (result.success && result.data.success) {
+                const loads = result.data.data || [];
+                document.getElementById('loadsList').innerHTML = `
+                    <table>
+                        <thead>
+                            <tr><th>Номер</th><th>Откуда</th><th>Куда</th><th>Стоимость</th><th>Статус</th></tr>
+                        </thead>
+                        <tbody>
+                            ${loads.map(load => `
+                                <tr>
+                                    <td>${load.load_number}</td>
+                                    <td>${load.route?.origin?.city || '-'}, ${load.route?.origin?.state || ''}</td>
+                                    <td>${load.route?.destination?.city || '-'}, ${load.route?.destination?.state || ''}</td>
+                                    <td>$${(load.cost || 0).toLocaleString()}</td>
+                                    <td>${load.status}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                showStatus('loadsStatus', `✅ Загружено ${loads.length} лоадов`);
+            } else {
+                showStatus('loadsStatus', `❌ Ошибка: ${result.data?.error || result.error}`, false);
+            }
+        }
+
+        async function loadInvoices() {
+            const result = await apiCall('/invoices');
+            
+            if (result.success && result.data.success) {
+                const invoices = result.data.data || [];
+                document.getElementById('invoicesList').innerHTML = `
+                    <table>
+                        <thead>
+                            <tr><th>Номер</th><th>Брокер</th><th>Сумма</th><th>Статус</th><th>Срок оплаты</th></tr>
+                        </thead>
+                        <tbody>
+                            ${invoices.map(invoice => `
+                                <tr>
+                                    <td>${invoice.invoice_number}</td>
+                                    <td>${invoice.broker_name || '-'}</td>
+                                    <td>$${(invoice.amount || 0).toLocaleString()}</td>
+                                    <td>${invoice.status}</td>
+                                    <td>${new Date(invoice.due_date).toLocaleDateString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                showStatus('invoicesStatus', `✅ Загружено ${invoices.length} инвойсов`);
+            } else {
+                showStatus('invoicesStatus', `❌ Ошибка: ${result.data?.error || result.error}`, false);
+            }
+        }
+
+        async function loadPayments() {
+            const result = await apiCall('/payments');
+            
+            if (result.success && result.data.success) {
+                const payments = result.data.data || [];
+                document.getElementById('paymentsList').innerHTML = `
+                    <table>
+                        <thead>
+                            <tr><th>Дата</th><th>Сумма</th><th>Способ</th><th>Инвойс</th><th>Брокер</th></tr>
+                        </thead>
+                        <tbody>
+                            ${payments.map(payment => `
+                                <tr>
+                                    <td>${new Date(payment.payment_date).toLocaleDateString()}</td>
+                                    <td>$${(payment.amount || 0).toLocaleString()}</td>
+                                    <td>${payment.payment_method}</td>
+                                    <td>${payment.invoice_number || '-'}</td>
+                                    <td>${payment.broker_name || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+                showStatus('paymentsStatus', `✅ Загружено ${payments.length} платежей`);
+            } else {
+                showStatus('paymentsStatus', `❌ Ошибка: ${result.data?.error || result.error}`, false);
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Базовая настройка API клиента
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: 'http://165.232.113.23:8081/api/v1',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

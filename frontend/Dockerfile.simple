@@ -1,0 +1,31 @@
+# Простой Dockerfile для быстрого деплоя
+FROM nginx:alpine
+
+# Удаляем дефолтную страницу nginx
+RUN rm -rf /usr/share/nginx/html/*
+
+# Копируем исходники напрямую (для development)
+COPY . /usr/share/nginx/html/
+
+# Создаем index.html для SPA
+RUN echo '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Billing System</title>
+    <script type="module" crossorigin src="/src/main.jsx"></script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>' > /usr/share/nginx/html/index.html
+
+# Копируем конфигурацию nginx с поддержкой модулей
+COPY nginx-dev.conf /etc/nginx/nginx.conf
+
+# Открываем порт
+EXPOSE 80
+
+# Запускаем nginx
+CMD ["nginx", "-g", "daemon off;"] 
