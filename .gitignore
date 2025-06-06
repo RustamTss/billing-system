@@ -103,4 +103,4 @@ nginx/logs/
 .nyc_output
 .coverage
 *.tgz
-*.tar.gz 
+*.tar.gz *.dmg
